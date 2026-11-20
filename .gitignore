@@ -11,10 +11,13 @@ __pycache__/
 
 # Local AI model weights and caches
 model/
+*.zip
+*.tar.gz
+*.tar
 
-# Local databases and vector indexes
-data/*.db
-data/qdrant_local/
+# Local databases and vector indexes (allow data, ignore temporary locks)
+data/**/.lock
+data/**/*.lock
 
 # Editor and OS files
 .vscode/
