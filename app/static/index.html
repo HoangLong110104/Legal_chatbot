@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trợ Lý Pháp Luật Việt Nam - Enterprise Agentic Graph RAG</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            },
+            surface: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#090d16'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css?v=20261119_5">
+</head>
+<body class="bg-surface-950 text-slate-100 h-screen max-h-screen flex flex-col font-sans antialiased overflow-hidden">
+
+  <!-- TOP HEADER -->
+  <header class="h-16 shrink-0 border-b border-slate-800 bg-surface-900/80 backdrop-blur px-6 flex items-center justify-between z-20">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+        <i class="fa-solid fa-scale-balanced text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base font-bold tracking-tight text-white">Legal Assistant AI</h1>
+          <span class="px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+            Agentic Graph RAG
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">Hệ thống hỏi đáp pháp luật Việt Nam • 3-Store Architecture (SQLite + Qdrant + Graph)</p>
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-800 border border-slate-700/60 text-xs">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-300 font-medium" id="system-status">3-Store Online</span>
+      </div>
+
+      <button id="btn-header-upload" title="Tải lên văn bản pháp luật" class="px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-white bg-emerald-500/10 hover:bg-emerald-600 border border-emerald-500/30 rounded-lg transition flex items-center gap-1.5">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>Nạp văn bản</span>
+      </button>
+
+      <button id="btn-settings" title="Cấu hình hệ thống" class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition">
+        <i class="fa-solid fa-sliders"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <div class="flex-1 flex min-h-0 overflow-hidden relative">
+
+    <!-- LEFT SIDEBAR: Chat Sessions & Legal Knowledge Base -->
+    <aside class="w-80 shrink-0 border-r border-slate-800 bg-surface-900/60 flex flex-col justify-between hidden md:flex h-full min-h-0">
+      <div class="p-4 overflow-y-auto space-y-4 flex-1 min-h-0 flex flex-col">
+        
+        <!-- PHẦN 1: QUẢN LÝ ĐOẠN CHAT (CHAT SESSIONS) -->
+        <div class="flex flex-col flex-1 min-h-0">
+          <div class="flex items-center justify-between mb-2 shrink-0">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <i class="fa-regular fa-comments text-emerald-400"></i>
+              <span>Quản lý đoạn chat</span>
+            </span>
+            <button id="btn-new-chat" title="Tạo cuộc trò chuyện mới" class="px-2.5 py-1 text-xs font-semibold text-emerald-400 hover:text-white bg-emerald-500/10 hover:bg-emerald-600 border border-emerald-500/30 hover:border-emerald-500 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Đoạn chat mới</span>
+            </button>
+          </div>
+          
+          <!-- Danh sách các đoạn chat -->
+          <div id="session-list" class="space-y-1.5 overflow-y-auto flex-1 min-h-[140px] max-h-[220px] pr-1">
+            <div class="text-xs text-slate-500 py-4 text-center italic">Đang tải đoạn chat...</div>
+          </div>
+        </div>
+
+        <!-- PHẦN 2: KHO DỮ LIỆU PHÁP LUẬT (LEGAL DATA STORE & UPLOAD) -->
+        <div class="pt-3 border-t border-slate-800 shrink-0">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-database text-blue-400"></i>
+              <span>Kho dữ liệu pháp luật</span>
+            </span>
+            <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">3-Store</span>
+          </div>
+
+          <!-- Thống kê 3 kho -->
+          <div class="space-y-1.5 mb-3">
+            <div class="p-2 rounded-lg bg-surface-800/80 border border-slate-700/50 flex items-center justify-between text-xs">
+              <span class="flex items-center gap-2 text-slate-300">
+                <i class="fa-solid fa-server text-blue-400"></i> SQLite (Luật gốc)
+              </span>
+              <span id="stat-docs" class="font-semibold text-slate-200">0 văn bản</span>
+            </div>
+            <div class="p-2 rounded-lg bg-surface-800/80 border border-slate-700/50 flex items-center justify-between text-xs">
+              <span class="flex items-center gap-2 text-slate-300">
+                <i class="fa-solid fa-magnifying-glass-chart text-amber-400"></i> Qdrant Local
+              </span>
+              <span id="stat-chunks" class="font-semibold text-slate-200">0 điều luật</span>
+            </div>
+            <div class="p-2 rounded-lg bg-surface-800/80 border border-slate-700/50 flex items-center justify-between text-xs">
+              <span class="flex items-center gap-2 text-slate-300">
+                <i class="fa-solid fa-circle-nodes text-emerald-400"></i> Graph Traversal
+              </span>
+              <span id="stat-rels" class="font-semibold text-slate-200">0 quan hệ</span>
+            </div>
+          </div>
+
+          <!-- 2 Nút thao tác: Tải lên văn bản & Quản lý kho luật -->
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btn-open-upload" class="py-2 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
+              <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+              <span>Tải lên văn bản</span>
+            </button>
+            <button id="btn-open-manage-docs" class="py-2 px-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-medium text-xs transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-folder-tree text-xs text-amber-400"></i>
+              <span>Quản lý kho</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strict Grounding Rules -->
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400 space-y-1 shrink-0">
+          <div class="flex items-center gap-1.5 text-emerald-400 font-semibold">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Nguyên tắc Strict Grounding</span>
+          </div>
+          <p class="text-[11px] leading-relaxed">Mọi câu trả lời được neo tuyệt đối vào văn bản pháp luật hiện hành và đồ thị truy vết hiệu lực, cam kết chống bịa đặt.</p>
+        </div>
+
+      </div>
+
+      <!-- Footer Info -->
+      <div class="p-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+        <span>Phiên bản v1.2.0</span>
+        <span class="text-emerald-500 font-medium">Local Mode (Zero Docker)</span>
+      </div>
+    </aside>
+
+    <!-- CENTER CHAT AREA -->
+    <main class="flex-1 flex flex-col min-h-0 min-w-0 bg-surface-950 relative overflow-hidden">
+
+      <!-- Chat Messages Scroll Container -->
+      <div id="messages-container" class="flex-1 overflow-y-auto px-4 md:px-12 py-6 pb-32 space-y-6 min-h-0">
+        
+        <!-- Welcome banner -->
+        <div id="welcome-banner" class="max-w-3xl mx-auto my-6 p-6 rounded-2xl bg-gradient-to-b from-surface-900 to-surface-900/60 border border-slate-800 shadow-xl text-center space-y-4">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl shadow-inner">
+            <i class="fa-solid fa-gavel"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Hệ Thống Trợ Lý Pháp Luật Việt Nam</h2>
+            <p class="text-sm text-slate-400 max-w-xl mx-auto mt-1">
+              Ứng dụng kiến trúc <strong class="text-slate-200">Agentic RAG + Graph Traversal</strong> truy vết chuỗi sửa đổi văn bản, trích dẫn chính xác và cam kết chống bịa đặt (Zero Hallucination).
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-left">
+            <div class="p-3 rounded-xl bg-surface-800/40 border border-slate-800">
+              <i class="fa-solid fa-bolt text-amber-400 text-sm mb-1"></i>
+              <div class="font-medium text-xs text-slate-200">Lối tắt Direct Lookup</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Nhận diện đích danh Điều/Văn bản và nhảy thẳng vào đồ thị.</div>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-800/40 border border-slate-800">
+              <i class="fa-solid fa-diagram-project text-emerald-400 text-sm mb-1"></i>
+              <div class="font-medium text-xs text-slate-200">Truy vết Sửa đổi</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Tự động thay thế điều cũ bằng bản sửa đổi mới nhất còn hiệu lực.</div>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-800/40 border border-slate-800">
+              <i class="fa-solid fa-book-bookmark text-blue-400 text-sm mb-1"></i>
+              <div class="font-medium text-xs text-slate-200">Trích dẫn Toàn văn</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Bấm vào trích dẫn để đọc nguyên văn điều luật từ SQLite.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Floating Scroll-To-Bottom Button -->
+      <button id="btn-scroll-bottom" title="Cuộn xuống dưới cùng" class="hidden absolute bottom-24 right-8 z-20 w-10 h-10 rounded-full bg-surface-800/90 hover:bg-emerald-600 text-slate-300 hover:text-white border border-slate-700 shadow-xl flex items-center justify-center transition">
+        <i class="fa-solid fa-arrow-down text-sm"></i>
+      </button>
+
+      <!-- INPUT BAR -->
+      <div class="shrink-0 p-4 bg-surface-900/90 border-t border-slate-800 backdrop-blur z-10">
+        <div class="max-w-4xl mx-auto">
+          <form id="chat-form" class="relative flex items-end rounded-2xl bg-surface-800 border border-slate-700/80 shadow-lg focus-within:border-emerald-500/80 transition p-2">
+            
+            <textarea 
+              id="user-input" 
+              rows="1" 
+              placeholder="Đặt câu hỏi pháp luật, hoặc tra cứu trực tiếp (VD: Điều 7 Nghị định 168/2024)..." 
+              class="w-full bg-transparent text-sm text-slate-100 placeholder-slate-400 focus:outline-none resize-none px-3 py-2 max-h-36 overflow-y-auto"
+            ></textarea>
+
+            <button 
+              type="submit" 
+              id="send-btn" 
+              class="w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md shadow-emerald-600/20"
+            >
+              <i class="fa-solid fa-arrow-up text-sm"></i>
+            </button>
+          </form>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
+            <span>Nhấn <kbd class="px-1.5 py-0.5 rounded bg-surface-800 border border-slate-700 text-slate-300">Enter</kbd> để gửi, <kbd class="px-1.5 py-0.5 rounded bg-surface-800 border border-slate-700 text-slate-300">Shift + Enter</kbd> xuống dòng</span>
+            <span class="text-slate-400">Nội dung trả lời đối chiếu trực tiếp từ cơ sở dữ liệu luật gốc</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT DRAWER: Full Article Law Viewer (Parent Document) -->
+    <div id="article-drawer" class="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-surface-900 border-l border-slate-800 shadow-2xl z-30 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+      <div class="h-16 border-b border-slate-800 px-6 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-file-contract text-emerald-400"></i>
+          <h3 class="text-sm font-bold text-white">Toàn Văn Điều Luật Gốc</h3>
+        </div>
+        <button id="close-drawer" class="w-8 h-8 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 space-y-4" id="drawer-content">
+        <!-- Content will be injected dynamically -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL 1: TẢI LÊN VĂN BẢN PHÁP LUẬT MỚI -->
+  <div id="upload-doc-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="w-full max-w-xl bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto my-auto flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white flex items-center gap-2 text-sm sm:text-base">
+          <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i>
+          <span>Nạp Văn Bản Pháp Luật Vào Hệ Thống (3-Store)</span>
+        </h3>
+        <button id="close-upload-modal" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Tabs chọn phương thức nạp -->
+      <div class="flex rounded-lg bg-surface-800 p-1 text-xs font-semibold">
+        <button type="button" id="tab-btn-file" class="flex-1 py-1.5 rounded-md bg-emerald-600 text-white transition flex items-center justify-center gap-2">
+          <i class="fa-regular fa-file"></i>
+          <span>Tải file (.txt, .pdf, .docx)</span>
+        </button>
+        <button type="button" id="tab-btn-raw" class="flex-1 py-1.5 rounded-md text-slate-400 hover:text-white transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-paste"></i>
+          <span>Dán văn bản trực tiếp</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: File Upload Form -->
+      <div id="tab-content-file" class="space-y-4">
+        <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer transition bg-surface-800/50">
+          <input type="file" id="file-input" accept=".txt,.pdf,.docx,.doc" class="hidden">
+          <i class="fa-solid fa-file-arrow-up text-3xl text-emerald-400 mb-2"></i>
+          <p class="text-xs font-medium text-slate-200">Kéo thả file vào đây hoặc <span class="text-emerald-400 underline">bấm để chọn file</span></p>
+          <p class="text-[11px] text-slate-400 mt-1">Hỗ trợ các định dạng: <strong>.txt, .pdf, .docx</strong></p>
+          <div id="selected-file-name" class="mt-2 text-xs font-semibold text-emerald-400 hidden"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Raw Text Form (Hidden by default) -->
+      <div id="tab-content-raw" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Dán toàn văn văn bản quy phạm pháp luật</label>
+          <textarea id="raw-doc-text" rows="7" placeholder="Dán nội dung toàn văn văn bản quy phạm pháp luật vào đây..." class="w-full p-3 rounded-lg bg-surface-800 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:border-emerald-500 resize-none font-mono"></textarea>
+        </div>
+      </div>
+
+      <!-- Metadata tùy chọn -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Số hiệu văn bản (Tùy chọn)</label>
+          <input type="text" id="upload-doc-symbol" placeholder="VD: 168/2024/NĐ-CP (Tự động nhận diện)" class="w-full p-2.5 rounded-lg bg-surface-800 border border-slate-700 text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Lĩnh vực pháp luật</label>
+          <select id="upload-domain" class="w-full p-2.5 rounded-lg bg-surface-800 border border-slate-700 text-slate-100 focus:outline-none focus:border-emerald-500">
+            <option value="giao_thong">Giao thông đường bộ</option>
+            <option value="lao_dong">Lao động - Tiền lương</option>
+            <option value="dan_su">Dân sự - Hôn nhân</option>
+            <option value="dat_dai">Đất đai - Nhà ở</option>
+            <option value="doanh_nghiep">Doanh nghiệp - Thương mại</option>
+            <option value="chung">Lĩnh vực khác</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Trạng thái / Tiến trình nạp -->
+      <div id="upload-status-box" class="p-3 rounded-lg bg-surface-800/80 border border-slate-700 text-xs text-slate-300 hidden">
+        <div id="upload-status-text" class="flex items-center gap-2"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button type="button" id="btn-cancel-upload" class="px-4 py-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+          Hủy bỏ
+        </button>
+        <button type="button" id="btn-submit-upload" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center gap-2 shadow-md shadow-emerald-600/20">
+          <i class="fa-solid fa-play"></i>
+          <span>Bắt đầu nạp & phân tích</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: QUẢN LÝ DANH MỤC VĂN BẢN ĐÃ NẠP -->
+  <div id="manage-docs-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="w-full max-w-4xl bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col my-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-folder-tree text-amber-400"></i>
+          <h3 class="font-bold text-white text-base">Quản Lý Danh Mục Văn Bản Pháp Luật</h3>
+        </div>
+        <button id="close-manage-docs" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-400 shrink-0">
+        Danh sách các văn bản quy phạm pháp luật đang được đồng bộ tại <strong>SQLite</strong>, lập chỉ mục tại <strong>Qdrant Local</strong> và thiết lập quan hệ tại <strong>Graph Traversal</strong>.
+      </div>
+
+      <!-- Bảng danh sách văn bản -->
+      <div class="flex-1 overflow-y-auto border border-slate-800 rounded-xl min-h-0">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-surface-800/90 text-slate-400 uppercase text-[10px] sticky top-0 border-b border-slate-800">
+            <tr>
+              <th class="p-3">Số hiệu</th>
+              <th class="p-3">Tiêu đề văn bản</th>
+              <th class="p-3">Lĩnh vực</th>
+              <th class="p-3 text-center">Số Điều</th>
+              <th class="p-3 text-center">Trạng thái</th>
+              <th class="p-3 text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="docs-table-body" class="divide-y divide-slate-800/80 font-mono text-[11px]">
+            <!-- Dynamic rows inserted by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bottom controls -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800 shrink-0">
+        <button id="btn-seed-data" class="px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-surface-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center gap-2">
+          <i class="fa-solid fa-arrows-rotate text-emerald-400"></i>
+          <span>Nạp lại 4 văn bản mẫu mặc định</span>
+        </button>
+
+        <button id="btn-close-manage" class="px-4 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="w-full max-w-md bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-emerald-400"></i>
+          <span>Cấu hình Hệ thống & LLM</span>
+        </h3>
+        <button id="close-settings" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Mô hình Ollama Qwen Local</label>
+          <select id="select-ollama-model" class="w-full p-2.5 rounded-lg bg-surface-800 border border-slate-700 text-slate-100 focus:outline-none focus:border-emerald-500">
+            <option value="qwen2.5:3b">qwen2.5:3b (Nhanh, nhẹ, 1.9 GB)</option>
+            <option value="qwen3.5:9b">qwen3.5:9b (Mạnh mẽ, lập luận sâu, 6.6 GB)</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">Được kết nối tự động tới máy chủ Ollama cục bộ (127.0.0.1:11434).</p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Google Gemini API Key (Dự phòng)</label>
+          <input type="password" id="input-gemini-key" placeholder="AIzaSy..." class="w-full p-2.5 rounded-lg bg-surface-800 border border-slate-700 text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">OpenAI API Key (Dự phòng)</label>
+          <input type="password" id="input-openai-key" placeholder="sk-..." class="w-full p-2.5 rounded-lg bg-surface-800 border border-slate-700 text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="p-3 rounded-lg bg-surface-800/80 border border-slate-700 space-y-1">
+          <div class="font-medium text-slate-200">Mô hình cục bộ đang kích hoạt</div>
+          <div class="text-[11px] text-slate-400">• Ingest Embedding: <code class="text-emerald-400">model/multilingual-e5-small</code></div>
+          <div class="text-[11px] text-slate-400">• Cross-Reranker: <code class="text-emerald-400">model/bge-reranker-v2-m3</code></div>
+          <div class="text-[11px] text-slate-400">• SQLite: <code class="text-emerald-400">data/legal.db</code> | Qdrant: <code class="text-emerald-400">data/qdrant_local/</code></div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btn-save-settings" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition">
+          Lưu cấu hình
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compatibility elements for cached browsers -->
+  <div class="hidden" aria-hidden="true">
+    <button id="btn-seed"></button>
+    <div id="sample-questions"></div>
+  </div>
+
+  <script src="/static/js/app.js?v=20261119_5"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+{
+  "engine": "ollama",
+  "model": "qwen2.5:1.5b",
+  "base_url": "http://127.0.0.1:11434",
+  "timestamp": "2026-11-20 14:51:57",
+  "token_metrics": {
+    "avg_prompt_tokens": 786.2,
+    "avg_completion_tokens": 408,
+    "avg_cached_tokens": 0,
+    "total_tokens_all_queries": 5971
+  },
+  "speed_metrics": {
+    "avg_ttft_ms": 66.1,
+    "min_ttft_ms": 40.7,
+    "avg_tps": 114.02,
+    "max_tps": 114.47,
+    "avg_e2e_s": 3.65
+  },
+  "resource_metrics": {
+    "vram_idle_mb": 2204.0,
+    "vram_peak_mb": 2210.0,
+    "vram_total_mb": 6144.0,
+    "gpu_util_avg_pct": 90.8,
+    "gpu_util_peak_pct": 100.0,
+    "gpu_power_avg_w": 65.1,
+    "cpu_avg_pct": 0.0,
+    "cpu_peak_pct": 0.0,
+    "ram_avg_mb": 0.0,
+    "ram_peak_mb": 0.0
+  },
+  "details": [
+    {
+      "prompt_tokens": 775,
+      "completion_tokens": 715,
+      "cached_tokens": 0,
+      "total_tokens": 1490,
+      "ttft_ms": 117.2,
+      "tps": 113.89,
+      "e2e_s": 6.4,
+      "answer_preview": "Trường hợp này không được đăng ký kết hôn.  Phân tích cụ thể:  1. Nam từ đủ 20 tuổi trở lên, nữ từ đủ 18 tuổi trở lên:    - Nam bạn đã 25 tuổi, không đủ điều ki...",
+      "test_id": "Q1_Marriage_Age",
+      "category": "Hôn nhân & Gia đình"
+    },
+    {
+      "prompt_tokens": 777,
+      "completion_tokens": 302,
+      "cached_tokens": 0,
+      "total_tokens": 1079,
+      "ttft_ms": 58.1,
+      "tps": 114.47,
+      "e2e_s": 2.7,
+      "answer_preview": "Trường hợp này không được phép đăng ký kết hôn với nhau.  Trong Điều 8 của Luật này, đã明确规定了结婚的条件，其中包括： - Nam từ đủ 20 tuổi trở lên, nữ từ đủ 18 tuổi trở lên； -...",
+      "test_id": "Q2_Marriage_SameContext_CacheTest",
+      "category": "Hôn nhân & Gia đình (Test Prefix Cache)"
+    },
+    {
+      "prompt_tokens": 777,
+      "completion_tokens": 366,
+      "cached_tokens": 0,
+      "total_tokens": 1143,
+      "ttft_ms": 44.2,
+      "tps": 113.93,
+      "e2e_s": 3.26,
+      "answer_preview": "Trường hợp này không có giá trị pháp lý.  Giải thích:  1. Điều 8 của Luật này quy định rõ ràng rằng việc kết hôn phải được đăng ký và do cơ quan nhà nước có thẩ...",
+      "test_id": "Q3_Marriage_Unregistered_CacheTest",
+      "category": "Hôn nhân & Gia đình (Test Prefix Cache)"
+    },
+    {
+      "prompt_tokens": 805,
+      "completion_tokens": 340,
+      "cached_tokens": 0,
+      "total_tokens": 1145,
+      "ttft_ms": 70.2,
+      "tps": 113.89,
+      "e2e_s": 3.06,
+      "answer_preview": "Trường hợp này CÓ ĐƯỢC bị phạt tiền và trừ điểm bằng lái.  1. Phân tích và đối chiếu:    - Điều 6 của Nghị định 168/2024 NĐ-CP quy định xử phạt đối với người đi...",
+      "test_id": "Q4_Traffic_RedLight",
+      "category": "Giao thông đường bộ"
+    },
+    {
+      "prompt_tokens": 797,
+      "completion_tokens": 317,
+      "cached_tokens": 0,
+      "total_tokens": 1114,
+      "ttft_ms": 40.7,
+      "tps": 113.91,
+      "e2e_s": 2.82,
+      "answer_preview": "Trường hợp này không đúng quy định của Bộ luật Lao động.   1. Công ty bắt nhân viên làm thêm 60 giờ trong 1 tháng không đúng quy định của Điều 107 của Bộ luật L...",
+      "test_id": "Q5_Labor_Overtime_CacheTest",
+      "category": "Lao động (Test Prefix Cache)"
+    }
+  ]
+}
